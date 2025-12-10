@@ -66,7 +66,7 @@ The `META-INF/services/org.keycloak.email.EmailTemplateProviderFactory` file reg
 ### Build Command
 
 ```bash
-cd java-extended
+cd keycloak-email-spi
 mvn clean package
 ```
 
@@ -105,7 +105,7 @@ If using docker-compose, mount the JAR:
 services:
   keycloak:
     volumes:
-      - ./java-extended/target/keycloak-email-spi-1.0.0.jar:/opt/keycloak/providers/keycloak-email-spi-1.0.0.jar
+      - ./keycloak-email-spi/target/keycloak-email-spi-1.0.0.jar:/opt/keycloak/providers/keycloak-email-spi-1.0.0.jar
 ```
 
 ## Configuration

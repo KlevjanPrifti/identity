@@ -28,8 +28,8 @@ RUN pnpm build-keycloak-theme
 FROM maven:3.9-eclipse-temurin-21 AS email_spi_builder
 
 WORKDIR /opt/email-spi
-COPY java-extended/pom.xml .
-COPY java-extended/src ./src
+COPY keycloak-email-spi/pom.xml .
+COPY keycloak-email-spi/src ./src
 
 RUN mvn clean package -q -DskipTests
 
@@ -92,4 +92,4 @@ HEALTHCHECK --interval=30s --timeout=3s --start-period=60s --retries=3 \
   CMD curl -f http://localhost:8080/health/ready || exit 1
 
 ENTRYPOINT ["/opt/keycloak/bin/kc.sh"]
-CMD ["start", "--optimized"]
+CMD ["start", "--optimized", "--import-realm"]
