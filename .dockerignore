@@ -1,0 +1,34 @@
+# Ignore dependencies and build artifacts
+node_modules
+**/node_modules
+.pnpm-store
+.pnpm
+pnpm-debug.log
+npm-debug.log
+*.log
+
+# Ignore local development artifacts
+.vscode
+.DS_Store
+coverage
+dist
+dist_keycloak
+build
+
+# Git and other VCS
+.git
+.gitignore
+
+# Env files
+.env
+.env.*
+
+# OS files
+Thumbs.db
+
+# Dockerfile and docker-compose related (avoid excluding Dockerfile itself)
+.docker-compose.override.yml
+
+# Optional: ignore local npm/yarn/pnpm caches
+.npm
+.yarn
