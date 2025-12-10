@@ -30,7 +30,9 @@ public class CustomEmailTemplateProviderFactory implements EmailTemplateProvider
     private static final Logger logger = Logger.getLogger(CustomEmailTemplateProviderFactory.class);
 
     public static final String PROVIDER_ID = "custom-email-template";
-    private static final String DEFAULT_PROVIDER_ID = "default";
+    private static final String FREEMARKER_PROVIDER_ID = "freemarker";
+
+    private EmailTemplateProviderFactory defaultFactory;
 
     @Override
     public EmailTemplateProvider create(KeycloakSession session) {
@@ -39,15 +41,24 @@ public class CustomEmailTemplateProviderFactory implements EmailTemplateProvider
             throw new IllegalArgumentException("KeycloakSession cannot be null");
         }
 
-        // Get the default email template provider
-        EmailTemplateProvider defaultProvider = session.getProvider(EmailTemplateProvider.class, DEFAULT_PROVIDER_ID);
+        // Try to get the FreeMarker provider (Keycloak's default implementation)
+        EmailTemplateProvider defaultProvider = session.getProvider(
+                EmailTemplateProvider.class,
+                FREEMARKER_PROVIDER_ID
+        );
 
-        if (defaultProvider == null) {
-            logger.errorf("Default EmailTemplateProvider not found. Cannot create %s", PROVIDER_ID);
-            throw new IllegalStateException("Default EmailTemplateProvider is not available");
+        // If FreeMarker provider is not available, try to create one using the factory
+        if (defaultProvider == null && defaultFactory != null) {
+            logger.debugf("FreeMarker provider not found in session, creating from factory");
+            defaultProvider = defaultFactory.create(session);
         }
 
-        logger.tracef("Creating CustomEmailTemplateProvider wrapping default provider");
+        if (defaultProvider == null) {
+            logger.errorf("No base EmailTemplateProvider found. Cannot create %s", PROVIDER_ID);
+            throw new IllegalStateException("Base EmailTemplateProvider is not available");
+        }
+
+        logger.tracef("Creating CustomEmailTemplateProvider wrapping base provider");
 
         // Wrap it with our custom provider to inject client info
         return new CustomEmailTemplateProvider(defaultProvider);
@@ -59,28 +70,32 @@ public class CustomEmailTemplateProviderFactory implements EmailTemplateProvider
 
         // Initialization logic if needed
         // This could be used to load configuration from keycloak.json or other sources
-        // Example:
-        // if (config != null) {
-        //     String someConfig = config.get("some-property", "default-value");
-        //     logger.infof("Loaded configuration: some-property=%s", someConfig);
-        // }
     }
 
     @Override
     public void postInit(KeycloakSessionFactory factory) {
         logger.debugf("Post-initializing %s", PROVIDER_ID);
 
-        // Post-initialization logic if needed
-        // This is called after all providers have been initialized
-        // Useful for cross-provider setup or validation
+        // Store reference to the default FreeMarker factory for fallback
+        if (factory != null) {
+            defaultFactory = (EmailTemplateProviderFactory) factory.getProviderFactory(
+                    EmailTemplateProvider.class,
+                    FREEMARKER_PROVIDER_ID
+            );
+
+            if (defaultFactory == null) {
+                logger.warn("FreeMarker EmailTemplateProviderFactory not found during post-init. " +
+                        "Custom email provider may not work correctly.");
+            } else {
+                logger.debugf("Successfully obtained reference to FreeMarker factory");
+            }
+        }
     }
 
     @Override
     public void close() {
         logger.debugf("Closing %s factory", PROVIDER_ID);
-
-        // Cleanup resources if needed
-        // This is called when Keycloak shuts down
+        defaultFactory = null;
     }
 
     @Override

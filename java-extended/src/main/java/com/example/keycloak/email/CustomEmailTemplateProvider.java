@@ -1,108 +1,228 @@
 package com.example.keycloak.email;
 
 import org.jboss.logging.Logger;
-import org.keycloak.Config;
+import org.keycloak.email.EmailException;
 import org.keycloak.email.EmailTemplateProvider;
-import org.keycloak.email.EmailTemplateProviderFactory;
-import org.keycloak.email.freemarker.FreeMarkerEmailTemplateProviderFactory;
-import org.keycloak.models.KeycloakSession;
-import org.keycloak.models.KeycloakSessionFactory;
+import org.keycloak.events.Event;
+import org.keycloak.models.ClientModel;
+import org.keycloak.models.RealmModel;
+import org.keycloak.models.UserModel;
+import org.keycloak.sessions.AuthenticationSessionModel;
+
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 
 /**
- * Factory class for creating instances of CustomEmailTemplateProvider.
+ * Custom Email Template Provider that wraps Keycloak's EmailTemplateProvider
+ * to inject full kcContext including client information into email templates.
  *
- * <p>This factory wraps the default EmailTemplateProvider to inject client information
- * into email template contexts. It is responsible for:
- * <ol>
- *   <li>Creating and configuring CustomEmailTemplateProvider instances</li>
- *   <li>Wrapping the default provider with client context enrichment</li>
- *   <li>Managing the lifecycle of the provider</li>
- *   <li>Registering the provider with Keycloak's SPI</li>
- * </ol>
- *
- * <p>The provider ID "custom-email-template" is used to identify this implementation.
- * To enable this provider, add it to your Keycloak deployment and configure via:
- * --spi-email-template-provider=custom-email-template
+ * <p>This allows email templates to access:
+ * <ul>
+ *   <li>client.clientId</li>
+ *   <li>client.name</li>
+ *   <li>client.attributes (including logoUri, etc.)</li>
+ *   <li>client.redirectUris</li>
+ *   <li>And all other ClientModel properties</li>
+ * </ul>
  *
  * @author Extended Keycloak Email SPI
  */
-public class CustomEmailTemplateProviderFactory implements EmailTemplateProviderFactory {
+public class CustomEmailTemplateProvider implements EmailTemplateProvider {
 
-    private static final Logger logger = Logger.getLogger(CustomEmailTemplateProviderFactory.class);
+    private static final Logger logger = Logger.getLogger(CustomEmailTemplateProvider.class);
 
-    public static final String PROVIDER_ID = "custom-email-template";
-    private static final String FREEMARKER_PROVIDER_ID = "freemarker";
+    private static final String CLIENT_ID_KEY = "clientId";
+    private static final String CLIENT_KEY = "client";
+    private static final String LOGO_URI_ATTR = "logoUri";
+    private static final String LOGO_URL_ATTR = "logoUrl";
+    private static final String DISPLAY_NAME_ATTR = "displayName";
 
-    private EmailTemplateProviderFactory defaultFactory;
+    private final EmailTemplateProvider delegate;
+    private RealmModel realm;
 
-    @Override
-    public EmailTemplateProvider create(KeycloakSession session) {
-        if (session == null) {
-            logger.error("KeycloakSession is null, cannot create CustomEmailTemplateProvider");
-            throw new IllegalArgumentException("KeycloakSession cannot be null");
-        }
-
-        // Try to get the FreeMarker provider (Keycloak's default implementation)
-        EmailTemplateProvider defaultProvider = session.getProvider(EmailTemplateProvider.class, FREEMARKER_PROVIDER_ID);
-
-        // If FreeMarker provider is not available, try to create one using the factory
-        if (defaultProvider == null && defaultFactory != null) {
-            logger.debugf("FreeMarker provider not found in session, creating from factory");
-            defaultProvider = defaultFactory.create(session);
-        }
-
-        if (defaultProvider == null) {
-            logger.errorf("No base EmailTemplateProvider found. Cannot create %s", PROVIDER_ID);
-            throw new IllegalStateException("Base EmailTemplateProvider is not available");
-        }
-
-        logger.tracef("Creating CustomEmailTemplateProvider wrapping base provider");
-
-        // Wrap it with our custom provider to inject client info
-        return new CustomEmailTemplateProvider(defaultProvider);
+    public CustomEmailTemplateProvider(EmailTemplateProvider delegate) {
+        this.delegate = Objects.requireNonNull(delegate, "Delegate EmailTemplateProvider cannot be null");
     }
 
-    @Override
-    public void init(Config.Scope config) {
-        logger.debugf("Initializing %s", PROVIDER_ID);
+    /**
+     * Build the template context and inject client information.
+     *
+     * @param templateId The ID/name of the template
+     * @param subject The email subject
+     * @param templateData The base template data
+     * @return Enhanced template context with client information
+     */
+    protected Map<String, Object> buildContext(String templateId, String subject, Map<String, Object> templateData) {
+        if (templateData == null) {
+            templateData = Collections.emptyMap();
+        }
 
-        // Initialization logic if needed
-        // This could be used to load configuration from keycloak.json or other sources
-    }
+        Map<String, Object> context = new HashMap<>(templateData);
 
-    @Override
-    public void postInit(KeycloakSessionFactory factory) {
-        logger.debugf("Post-initializing %s", PROVIDER_ID);
+        // Inject client information if available
+        try {
+            Object clientIdObj = context.get(CLIENT_ID_KEY);
 
-        // Store reference to the default FreeMarker factory for fallback
-        if (factory != null) {
-            defaultFactory = (EmailTemplateProviderFactory) factory.getProviderFactory(
-                    EmailTemplateProvider.class, FREEMARKER_PROVIDER_ID);
-
-            if (defaultFactory == null) {
-                logger.warn("FreeMarker EmailTemplateProviderFactory not found during post-init. " +
-                        "Custom email provider may not work correctly.");
-            } else {
-                logger.debugf("Successfully obtained reference to FreeMarker factory");
+            if (clientIdObj instanceof String) {
+                String clientId = (String) clientIdObj;
+                enrichContextWithClientInfo(context, clientId, templateId);
             }
+        } catch (Exception e) {
+            // Log error but don't fail email sending if something goes wrong
+            logger.warnf(e, "Error enhancing email template context with client information for template: %s", templateId);
         }
+
+        return context;
+    }
+
+    /**
+     * Enriches the context with client information.
+     *
+     * @param context The context map to enrich
+     * @param clientId The client ID to look up
+     * @param templateId The template ID for logging purposes
+     */
+    private void enrichContextWithClientInfo(Map<String, Object> context, String clientId, String templateId) {
+        if (clientId == null || clientId.trim().isEmpty() || realm == null) {
+            return;
+        }
+
+        ClientModel client = realm.getClientByClientId(clientId);
+
+        if (client == null) {
+            logger.debugf("Client not found for clientId: %s in template: %s", clientId, templateId);
+            return;
+        }
+
+        Map<String, Object> clientContext = buildClientContext(client);
+        context.put(CLIENT_KEY, clientContext);
+
+        logger.debugf("Injected client context for client: %s in template: %s", clientId, templateId);
+    }
+
+    /**
+     * Builds a client context map from the ClientModel.
+     *
+     * @param client The ClientModel to extract information from
+     * @return Map containing client information
+     */
+    private Map<String, Object> buildClientContext(ClientModel client) {
+        Map<String, Object> clientContext = new HashMap<>();
+
+        // Client basic information - handle null values safely
+        clientContext.put(CLIENT_ID_KEY, client.getClientId());
+        clientContext.put("name", client.getName());
+        clientContext.put("description", client.getDescription());
+        clientContext.put("protocol", client.getProtocol());
+        clientContext.put("publicClient", client.isPublicClient());
+        clientContext.put("enabled", client.isEnabled());
+        clientContext.put("consentRequired", client.isConsentRequired());
+
+        // Client attributes (includes logoUri, etc.)
+        Map<String, String> attributes = client.getAttributes();
+        if (attributes != null && !attributes.isEmpty()) {
+            // Create defensive copy to prevent external modification
+            Map<String, String> attributesCopy = new HashMap<>(attributes);
+            clientContext.put("attributes", attributesCopy);
+
+            // Convenience accessors for common attributes
+            clientContext.put(LOGO_URI_ATTR, attributes.get(LOGO_URI_ATTR));
+            clientContext.put(LOGO_URL_ATTR, attributes.get(LOGO_URL_ATTR));
+            clientContext.put(DISPLAY_NAME_ATTR, attributes.get(DISPLAY_NAME_ATTR));
+        } else {
+            clientContext.put("attributes", Collections.emptyMap());
+        }
+
+        // Redirect URIs and origins - handle null collections safely
+        clientContext.put("redirectUris",
+                client.getRedirectUris() != null ? client.getRedirectUris() : Collections.emptySet());
+        clientContext.put("webOrigins",
+                client.getWebOrigins() != null ? client.getWebOrigins() : Collections.emptySet());
+        clientContext.put("baseUrl", client.getBaseUrl());
+        clientContext.put("rootUrl", client.getRootUrl());
+
+        return clientContext;
+    }
+
+    @Override
+    public EmailTemplateProvider setRealm(RealmModel realm) {
+        this.realm = realm;
+        delegate.setRealm(realm);
+        return this;
+    }
+
+    @Override
+    public EmailTemplateProvider setUser(UserModel user) {
+        delegate.setUser(user);
+        return this;
+    }
+
+    @Override
+    public EmailTemplateProvider setAttribute(String name, Object value) {
+        delegate.setAttribute(name, value);
+        return this;
+    }
+
+    @Override
+    public EmailTemplateProvider setAuthenticationSession(AuthenticationSessionModel authSession) {
+        delegate.setAuthenticationSession(authSession);
+        return this;
+    }
+
+    @Override
+    public void send(String templateId, String subject, Map<String, Object> templateData) throws EmailException {
+        Map<String, Object> enrichedContext = buildContext(templateId, subject, templateData);
+        delegate.send(templateId, subject, enrichedContext);
+    }
+
+    @Override
+    public void send(String templateId, List<Object> recipients, String subject, Map<String, Object> templateData) throws EmailException {
+        Map<String, Object> enrichedContext = buildContext(templateId, subject, templateData);
+        delegate.send(templateId, recipients, subject, enrichedContext);
+    }
+
+    @Override
+    public void sendVerifyEmail(String link, long expirationTime) throws EmailException {
+        delegate.sendVerifyEmail(link, expirationTime);
+    }
+
+    @Override
+    public void sendPasswordReset(String link, long expirationTime) throws EmailException {
+        delegate.sendPasswordReset(link, expirationTime);
+    }
+
+    @Override
+    public void sendEmailUpdateConfirmation(String link, long expirationTime, String changeEmailExpiredMessage) throws EmailException {
+        delegate.sendEmailUpdateConfirmation(link, expirationTime, changeEmailExpiredMessage);
+    }
+
+    @Override
+    public void sendExecuteActions(String link, long expirationTime) throws EmailException {
+        delegate.sendExecuteActions(link, expirationTime);
+    }
+
+    @Override
+    public void sendConfirmIdentityBrokerLink(String link, long expirationTime) throws EmailException {
+        delegate.sendConfirmIdentityBrokerLink(link, expirationTime);
+    }
+
+    @Override
+    public void sendEvent(Event event) throws EmailException {
+        delegate.sendEvent(event);
+    }
+
+    @Override
+    public void sendSmtpTestEmail(Map<String, String> config, UserModel user) throws EmailException {
+        delegate.sendSmtpTestEmail(config, user);
     }
 
     @Override
     public void close() {
-        logger.debugf("Closing %s factory", PROVIDER_ID);
-        defaultFactory = null;
-    }
-
-    @Override
-    public String getId() {
-        return PROVIDER_ID;
-    }
-
-    @Override
-    public int order() {
-        // Return a higher number to have this provider take precedence over default
-        // Default implementations typically return 0
-        return 100;
+        if (delegate != null) {
+            delegate.close();
+        }
     }
 }
