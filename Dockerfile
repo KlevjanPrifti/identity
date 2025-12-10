@@ -1,5 +1,4 @@
-ARG KEYCLOAK_VERSION=26.4.7
-
+ENV KEYCLOAK_VERSION
 # Stage 1: Build Keycloak theme JAR
 FROM node:20-alpine AS keycloakify_jar_builder
 
@@ -25,8 +24,8 @@ COPY --from=keycloakify_jar_builder /opt/app/dist_keycloak/*.jar /opt/keycloak/p
 
 # Configure the database vendor and enable health and metrics endpoints.
 # ENV KC_DB=postgres
-ENV KC_HEALTH_ENABLED=true
-ENV KC_METRICS_ENABLED=true
+ENV KC_HEALTH_ENABLED
+ENV KC_METRICS_ENABLED
 
 # For demonstration purposes only. Use signed certificates in production!
 WORKDIR /opt/keycloak
@@ -35,6 +34,7 @@ WORKDIR /opt/keycloak
 RUN /opt/keycloak/bin/kc.sh build
 
 # Defines the runtime container image
+ENV KEYCLOAK_VERSION
 FROM quay.io/keycloak/keycloak:${KEYCLOAK_VERSION}
 
 # Copy the configuration files from the builder image to this runtime image
@@ -42,10 +42,10 @@ COPY --from=builder /opt/keycloak/ /opt/keycloak/
 
 # Set default values db pool/configs
 # ENV KC_DB=postgres
-ENV KC_DB_POOL_INITIAL_SIZE=50
-ENV KC_DB_POOL_MIN_SIZE=50
-ENV KC_DB_POOL_MAX_SIZE=50
-ENV QUARKUS_TRANSACTION_MANAGER_ENABLE_RECOVERY=true
+ENV KC_DB_POOL_INITIAL_SIZE
+ENV KC_DB_POOL_MIN_SIZE
+ENV KC_DB_POOL_MAX_SIZE
+ENV QUARKUS_TRANSACTION_MANAGER_ENABLE_RECOVERY
 
 # Default hostname value. This should be updated when deployed.
 ENV KC_HOSTNAME
