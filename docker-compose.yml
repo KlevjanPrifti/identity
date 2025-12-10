@@ -3,15 +3,15 @@ services:
     image: postgres:17-alpine
     container_name: postgres
     environment:
-      POSTGRES_DB: ${POSTGRES_DB:keycloak-custom}
-      POSTGRES_USER: ${POSTGRES_USER:keycloak}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:password}
+      POSTGRES_DB: ${POSTGRES_DB:-keycloak-custom}
+      POSTGRES_USER: ${POSTGRES_USER:-keycloak}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     volumes:
       - postgres_data:/var/lib/postgresql/data
     networks:
       - keycloak-network
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:keycloak} -d ${POSTGRES_DB:keycloak-custom}"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-keycloak} -d ${POSTGRES_DB:-keycloak-custom}"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -19,22 +19,39 @@ services:
   keycloak:
     build:
       context: .
+      args:
+        KEYCLOAK_VERSION: ${KEYCLOAK_VERSION}
     container_name: keycloak
-    command: ["--optimized", "--import-realm"]
+    command: ["--optimized"]
     environment:
-      # set hostname if you are behind a reverse proxy
-      # KC_HOSTNAME: localhost
-      KC_DB_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB:keycloak-custom}
-      KC_DB_USERNAME: ${POSTGRES_USER:keycloak}
-      KC_DB_PASSWORD: ${POSTGRES_PASSWORD:password}
-      # Set default values for admin user
-      KC_BOOTSTRAP_ADMIN_USERNAME: admin
-      KC_BOOTSTRAP_ADMIN_PASSWORD: adminpassword
+      # Keycloak basic config
+      KEYCLOAK_VERSION: ${KEYCLOAK_VERSION}
+      KC_HOSTNAME: ${KC_HOSTNAME}
+      KC_HEALTH_ENABLED: ${KC_HEALTH_ENABLED}
+      KC_METRICS_ENABLED: ${KC_METRICS_ENABLED}
+      
+      # Database config
+      KC_DB: postgres
+      KC_DB_URL: ${KC_DB_URL}
+      KC_DB_USERNAME: ${KC_DB_USERNAME}
+      KC_DB_PASSWORD: ${KC_DB_PASSWORD}
+      KC_DB_POOL_INITIAL_SIZE: ${KC_DB_POOL_INITIAL_SIZE}
+      KC_DB_POOL_MIN_SIZE: ${KC_DB_POOL_MIN_SIZE}
+      KC_DB_POOL_MAX_SIZE: ${KC_DB_POOL_MAX_SIZE}
+      QUARKUS_TRANSACTION_MANAGER_ENABLE_RECOVERY: ${QUARKUS_TRANSACTION_MANAGER_ENABLE_RECOVERY}
+      
+      # Admin user credentials
+      KC_BOOTSTRAP_ADMIN_USERNAME: ${KC_BOOTSTRAP_ADMIN_USERNAME}
+      KC_BOOTSTRAP_ADMIN_PASSWORD: ${KC_BOOTSTRAP_ADMIN_PASSWORD}
+      
+      # HTTP and proxy config
+      KC_HTTP_ENABLED: ${KC_HTTP_ENABLED}
+      KC_PROXY: ${KC_PROXY}
     depends_on:
       postgres:
         condition: service_healthy
     ports:
-      - "8080:8080"
+      - "${KEYCLOAK_PORT:-8080}:8080"
     networks:
       - keycloak-network
 

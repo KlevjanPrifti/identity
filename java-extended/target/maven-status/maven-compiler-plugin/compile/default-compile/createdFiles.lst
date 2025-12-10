@@ -1,0 +1,2 @@
+com\example\keycloak\email\CustomEmailTemplateProviderFactory.class
+com\example\keycloak\email\CustomEmailTemplateProvider.class

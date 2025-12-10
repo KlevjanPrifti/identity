@@ -1,4 +1,4 @@
-import { Text, render, Container, Img, Button, Hr } from "jsx-email";
+import { Text, render, Container, Button, Hr } from "jsx-email";
 import * as Fm from "keycloakify-emails/jsx-email";
 import { EmailLayout } from "../layout";
 import type { GetSubject, GetTemplate, GetTemplateProps } from "keycloakify-emails";
@@ -151,13 +151,22 @@ export const previewProps: TemplateProps = {
 export const templateName = "Email Verification";
 
 const { exp, v } = createVariablesHelper("email-verification.ftl");
-const logoSrc = import.meta.isJsxEmailPreview ? "/assets/kc-logo.png" : exp("properties.domain_logo");
+// Try to get client logo from the SPI context first, fallback to properties
+// Cast to 'any' to access client object from the new email SPI extension
+const logoSrc = import.meta.isJsxEmailPreview 
+  ? "/assets/kc-logo.png" 
+  : exp("client.logoUri ?? properties.domain_logo" as any);
+const clientName = import.meta.isJsxEmailPreview 
+  ? "Test Client" 
+  : exp("client.name ?? realmName" as any);
 
 export const Template = ({ locale }: TemplateProps) => (
-  <EmailLayout preview="Welcome! Please verify your email address" locale={locale}>
-    <Container style={styles.logoContainer}>
-      <Img src={logoSrc} alt="Logo" width="250" height="60" />
-    </Container>
+  <EmailLayout 
+    preview="Welcome! Please verify your email address" 
+    locale={locale}
+    logoUrl={logoSrc}
+    logoAlt={`${clientName} Logo`}
+  >
 
     <Text style={styles.badge}>ACCOUNT CREATED</Text>
 

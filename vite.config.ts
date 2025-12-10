@@ -15,7 +15,7 @@ export default defineConfig({
       themeName: ["keycloak-custom"],
       // See: https://docs.keycloakify.dev/features/environment-variables
       environmentVariables: [
-        { name: "domain_logo", default: "https://www.manuscriba.com/assets/logo.png" },
+        { name: "domain_logo", default: "https://innovactive.al/img/logo500.png" },
       ],
       postBuild: async (buildContext) => {
         await buildEmailTheme({

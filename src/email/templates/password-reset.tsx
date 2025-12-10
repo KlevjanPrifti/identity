@@ -1,4 +1,4 @@
-import { Text, render, Container, Img, Button } from "jsx-email";
+import { Text, render, Container, Button } from "jsx-email";
 import { EmailLayout } from "../layout";
 import type { GetSubject, GetTemplate, GetTemplateProps } from "keycloakify-emails";
 import { createVariablesHelper } from "keycloakify-emails/variables";
@@ -20,17 +20,24 @@ export const previewProps: TemplateProps = {
 };
 
 export const templateName = "Password Reset";
-const logoContainer = { textAlign: "center" as const, paddingBottom: 8 };
 
 const { v, exp } = createVariablesHelper("password-reset.ftl");
-const logoSrc = import.meta.isJsxEmailPreview ? "/assets/kc-logo.png" : exp("properties.domain_logo");
-
+// Try to get client logo from the SPI context first, fallback to properties
+// Cast to 'any' to access client object from the new email SPI extension
+const logoSrc = import.meta.isJsxEmailPreview 
+  ? "/assets/kc-logo.png" 
+  : exp("client.logoUri ?? properties.domain_logo" as any);
+const clientName = import.meta.isJsxEmailPreview 
+  ? "Test Client" 
+  : exp("client.name ?? realmName" as any);
 
 export const Template = ({ locale }: TemplateProps) => (
-  <EmailLayout preview={`Reset your password`} locale={locale}>
-    <Container style={logoContainer}>
-      <Img src={logoSrc} alt="Keycloak logo" width="250" height="75" />
-    </Container>
+  <EmailLayout 
+    preview={`Reset your password`} 
+    locale={locale}
+    logoUrl={logoSrc}
+    logoAlt={`${clientName} Logo`}
+  >
     <Text style={paragraph}>
       <p>
         Someone just requested to change your {exp("realmName" as any)} account's credentials. If this was you, click on the link below to reset them.

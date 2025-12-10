@@ -1,4 +1,4 @@
-import { Text, render, Container, Img } from "jsx-email";
+import { Text, render, Container, } from "jsx-email";
 import { EmailLayout } from "../layout";
 import * as Fm from "keycloakify-emails/jsx-email";
 import type { GetSubject, GetTemplate, GetTemplateProps } from "keycloakify-emails";
@@ -20,18 +20,16 @@ export const previewProps: TemplateProps = {
   locale: "en",
   themeName: "keycloak-custom",
 };
-const logoContainer = { textAlign: "center" as const, paddingBottom: 8 };
-
 export const templateName = "Org Invite";
 
 const { exp, v } = createVariablesHelper("org-invite.ftl");
-const logoSrc = import.meta.isJsxEmailPreview ? "/assets/kc-logo.png" : exp("properties.domain_logo");
+// Use centralized helper for logo selection
+import { getLogo } from "../getLogo";
+const { logoSrc, clientName } = getLogo(exp, import.meta.isJsxEmailPreview);
 
 export const Template = ({ locale }: TemplateProps) => (
-  <EmailLayout preview={`Invitation to join organization`} locale={locale}>
-    <Container style={logoContainer}>
-      <Img src={logoSrc} alt="Keycloak logo" width="250" height="75" />
-    </Container>
+  <EmailLayout preview={`Invitation to join organization`} locale={locale} logoUrl={logoSrc} logoAlt={`${clientName} Logo`}>
+    
     <Text style={paragraph}>
       <Fm.If condition={`${v("firstName")}?? && ${v("lastName")}??`}>
         <p>

@@ -1,4 +1,4 @@
-import { render, Text, Img, Container, Hr } from "jsx-email";
+import { render, Text, Container, Hr } from "jsx-email";
 import * as Fm from "keycloakify-emails/jsx-email";
 import { EmailLayout } from "../layout";
 import { createVariablesHelper } from "keycloakify-emails/variables";
@@ -78,13 +78,12 @@ export const templateName = "Email Test";
 
 const { exp, v } = createVariablesHelper("email-test.ftl");
 
-const logoSrc = import.meta.isJsxEmailPreview ? "/assets/kc-logo.png" : exp("properties.domain_logo");
+// Use centralized helper for logo selection
+import { getLogo } from "../getLogo";
+const { logoSrc, clientName } = getLogo(exp, import.meta.isJsxEmailPreview);
 
 export const Template = ({ locale }: TemplateProps) => (
-  <EmailLayout preview={"SMTP Configuration Test - Action Required"} locale={locale}>
-    <Container style={styles.logoContainer}>
-      <Img src={logoSrc} alt="Logo" width="250" height="60" />
-    </Container>
+  <EmailLayout preview={"SMTP Configuration Test - Action Required"} locale={locale} logoUrl={logoSrc} logoAlt={`${clientName} Logo`}>
 
     <Container style={styles.card}>
       <Text style={styles.badge}>✓ SYSTEM TEST</Text>

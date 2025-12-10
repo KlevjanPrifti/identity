@@ -1,4 +1,4 @@
-import { Text, render, Container, Img, Button, Hr } from "jsx-email";
+import { Text, render, Container, Button, Hr } from "jsx-email";
 import * as Fm from "keycloakify-emails/jsx-email";
 import { EmailLayout } from "../layout";
 import type { GetSubject, GetTemplate, GetTemplateProps } from "keycloakify-emails";
@@ -130,14 +130,13 @@ export const previewProps: TemplateProps = {
 export const templateName = "Email Update Confirmation";
 
 const { exp, v } = createVariablesHelper("email-update-confirmation.ftl");
-const logoSrc = import.meta.isJsxEmailPreview ? "/assets/kc-logo.png" : exp("properties.domain_logo");
+// Use centralized helper for logo selection
+import { getLogo } from "../getLogo";
+const { logoSrc, clientName } = getLogo(exp, import.meta.isJsxEmailPreview);
 
 export const Template = ({ locale }: TemplateProps) => (
-  <EmailLayout preview="Verify your new email address" locale={locale}>
-    <Container style={styles.logoContainer}>
-      <Img src={logoSrc} alt="Logo" width="250" height="60" />
-    </Container>
-
+  <EmailLayout preview="Verify your new email address" locale={locale} logoUrl={logoSrc} logoAlt={`${clientName} Logo`}>
+    
     <Text style={styles.badge}>ACTION REQUIRED</Text>
 
     <Text style={styles.header}>

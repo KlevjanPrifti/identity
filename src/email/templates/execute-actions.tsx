@@ -1,4 +1,4 @@
-import { Img, render, Text, Container, Button, Hr } from "jsx-email";
+import { render, Text, Container, Button, Hr } from "jsx-email";
 import * as Fm from "keycloakify-emails/jsx-email";
 import { GetSubject, GetTemplate, GetTemplateProps } from "keycloakify-emails";
 import { ReactNode } from "react";
@@ -161,13 +161,13 @@ const FmList = (props: { value: string; itemAs: string; children: ReactNode }) =
 );
 
 const { exp, v } = createVariablesHelper("executeActions.ftl");
-const logoSrc = import.meta.isJsxEmailPreview ? "/assets/kc-logo.png" : exp("properties.domain_logo");
+// Use centralized helper for logo selection
+import { getLogo } from "../getLogo";
+const { logoSrc, clientName } = getLogo(exp, import.meta.isJsxEmailPreview);
 
 export const Template = ({ locale }: TemplateProps) => (
-  <EmailLayout preview="Account update required by administrator" locale={locale}>
-    <Container style={styles.logoContainer}>
-      <Img src={logoSrc} alt="Logo" width="250" height="60" />
-    </Container>
+  <EmailLayout preview="Account update required by administrator" locale={locale} logoUrl={logoSrc} logoAlt={`${clientName} Logo`}>
+    
 
     <Text style={styles.badge}>ADMIN REQUEST</Text>
 
