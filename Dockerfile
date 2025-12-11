@@ -27,10 +27,12 @@ WORKDIR /opt/keycloak
 COPY --from=keycloakify_jar_builder /opt/app/dist_keycloak/*.jar /opt/keycloak/providers/
 
 # Build-time config (safe)
-ENV KC_DB=postgres \
-    KC_HEALTH_ENABLED=true \
+# Remove KC_PROXY
+ENV KC_HEALTH_ENABLED=true \
     KC_METRICS_ENABLED=true \
-    KC_PROXY=edge
+    KC_HOSTNAME=${KC_HOSTNAME} \
+    KC_HTTP_ENABLED=true \
+    KC_PROXY_HEADERS=xforwarded
 
 RUN /opt/keycloak/bin/kc.sh build
 
