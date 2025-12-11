@@ -30,7 +30,6 @@ COPY --from=keycloakify_jar_builder /opt/app/dist_keycloak/*.jar /opt/keycloak/p
 # Remove KC_PROXY
 ENV KC_HEALTH_ENABLED=true \
     KC_METRICS_ENABLED=true \
-    KC_HOSTNAME=${KC_HOSTNAME} \
     KC_HTTP_ENABLED=true \
     KC_PROXY_HEADERS=xforwarded
 
@@ -49,6 +48,7 @@ COPY --from=builder /opt/keycloak/ /opt/keycloak/
 # Default runtime env — all secrets come from docker-compose
 ENV KC_PROXY=edge \
     KC_HEALTH_ENABLED=true \
+    KC_HOSTNAME=${KC_HOSTNAME} \
     KC_METRICS_ENABLED=true
 
 # Healthcheck (HTTP is always enabled in dev mode)
