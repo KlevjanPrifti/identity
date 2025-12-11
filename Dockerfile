@@ -26,10 +26,11 @@ WORKDIR /opt/keycloak
 COPY --from=keycloakify_jar_builder /opt/app/dist_keycloak/*.jar /opt/keycloak/providers/
 
 # Build-time config (do NOT include secrets like DB password)
-ENV KC_DB=postgres \
-    KC_HEALTH_ENABLED=true \
-    KC_METRICS_ENABLED=true \
-    KC_HTTP_ENABLED=true \
+ENV KC_DB=postgres
+ENV KC_HEALTH_ENABLED=true
+ENV KC_METRICS_ENABLED=true
+ENV KC_HTTP_ENABLED=true
+ENV KC_PROXY=edge
 
 # Build optimized Keycloak with DB vendor
 RUN /opt/keycloak/bin/kc.sh build --db=postgres
