@@ -30,12 +30,27 @@ services:
       KC_DB_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB}
       KC_DB_USERNAME: ${POSTGRES_USER}
       KC_DB_PASSWORD: ${POSTGRES_PASSWORD}
+
       KC_BOOTSTRAP_ADMIN_USERNAME: ${KEYCLOAK_ADMIN}
       KC_BOOTSTRAP_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD}
+
+      # Hostname & proxy settings
       KC_HOSTNAME: ${KC_HOSTNAME}
+      KC_PROXY: edge
+      KC_HOSTNAME_STRICT: "false"
+
+      # Disable clustering for single-node setup
+      KC_CLUSTER: local
+      KC_CACHE: local
+
+      # Health & metrics
+      KC_HEALTH_ENABLED: "true"
+      KC_METRICS_ENABLED: "true"
+
     restart: always
     networks:
       - keycloak-network
+
     # Optional: import realms at startup
     volumes:
       - ./realms:/opt/keycloak/data/import
