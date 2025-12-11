@@ -1,8 +1,7 @@
-version: "3.9"
-
 services:
   postgres:
     image: postgres:17-alpine
+    container_name: postgres
     environment:
       POSTGRES_DB: ${POSTGRES_DB}
       POSTGRES_USER: ${POSTGRES_USER}
@@ -15,27 +14,35 @@ services:
       timeout: 5s
       retries: 5
     restart: always
+    networks:
+      - keycloak-network
 
   keycloak:
     build:
       context: .
+    container_name: keycloak
     depends_on:
       postgres:
         condition: service_healthy
     ports:
       - "8080:8080"
     environment:
-      KC_DB: postgres
       KC_DB_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB}
       KC_DB_USERNAME: ${POSTGRES_USER}
       KC_DB_PASSWORD: ${POSTGRES_PASSWORD}
       KC_BOOTSTRAP_ADMIN_USERNAME: ${KEYCLOAK_ADMIN}
       KC_BOOTSTRAP_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD}
       KC_HOSTNAME: ${KC_HOSTNAME}
-      KC_HTTP_ENABLED: "true"
-      KC_HEALTH_ENABLED: "true"
-      KC_PROXY_HEADERS: "xforwarded"
     restart: always
+    networks:
+      - keycloak-network
+    # Optional: import realms at startup
+    volumes:
+      - ./realms:/opt/keycloak/data/import
+    command: ["--optimized", "--import-realm"]
 
 volumes:
   postgres_data:
+
+networks:
+  keycloak-network: {}
