@@ -5,7 +5,7 @@ ARG KEYCLOAK_VERSION=26.4.7
 ############################################
 FROM node:20-alpine AS keycloakify_jar_builder
 
-RUN apk update && apk add --no-cache openjdk17-jdk maven curl bash
+RUN apk update && apk add --no-cache openjdk17-jdk maven bash curl
 
 WORKDIR /opt/app
 
@@ -16,7 +16,7 @@ COPY . .
 RUN pnpm build-keycloak-theme
 
 ############################################
-# Stage 2: Build Keycloak (safe build-time options)
+# Stage 2: Build Keycloak (optimized)
 ############################################
 FROM quay.io/keycloak/keycloak:${KEYCLOAK_VERSION} AS builder
 
@@ -25,13 +25,13 @@ WORKDIR /opt/keycloak
 # Copy custom theme provider JAR
 COPY --from=keycloakify_jar_builder /opt/app/dist_keycloak/*.jar /opt/keycloak/providers/
 
-# Build-time options (no secrets)
-ENV KC_HEALTH_ENABLED=true \
+# Build-time config (do NOT include secrets like DB password)
+ENV KC_DB=postgres \
+    KC_HEALTH_ENABLED=true \
     KC_METRICS_ENABLED=true \
     KC_HTTP_ENABLED=true \
-    KC_PROXY_HEADERS=xforwarded
 
-# Persist build options for optimized runtime
+# Build optimized Keycloak with DB vendor
 RUN /opt/keycloak/bin/kc.sh build --db=postgres
 
 ############################################
@@ -41,19 +41,19 @@ FROM quay.io/keycloak/keycloak:${KEYCLOAK_VERSION}
 
 WORKDIR /opt/keycloak
 
-# Copy built Keycloak from builder stage
+# Copy optimized Keycloak from builder
 COPY --from=builder /opt/keycloak/ /opt/keycloak/
 
-# Runtime options (credentials injected via env)
-ENV KC_HEALTH_ENABLED=true \
-    KC_METRICS_ENABLED=true \
-    KC_HTTP_ENABLED=true \
-    KC_PROXY_HEADERS=xforwarded \
-    KC_HOSTNAME=${KC_HOSTNAME} \
+# Runtime environment — secrets come from Docker Compose
+ENV KC_DB_URL=jdbc:postgresql://postgres:5432/${POSTGRES_DB} \
     KC_DB_USERNAME=${POSTGRES_USER} \
     KC_DB_PASSWORD=${POSTGRES_PASSWORD} \
     KC_BOOTSTRAP_ADMIN_USERNAME=${KEYCLOAK_ADMIN} \
-    KC_BOOTSTRAP_ADMIN_PASSWORD=${KEYCLOAK_ADMIN_PASSWORD}
+    KC_BOOTSTRAP_ADMIN_PASSWORD=${KEYCLOAK_ADMIN_PASSWORD} \
+    KC_HOSTNAME=${KC_HOSTNAME} \
+    KC_HTTP_ENABLED=true \
+    KC_HEALTH_ENABLED=true \
+    KC_METRICS_ENABLED=true \
 
 # Healthcheck
 HEALTHCHECK --interval=30s --timeout=5s --start-period=40s --retries=5 \

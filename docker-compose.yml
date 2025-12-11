@@ -26,7 +26,7 @@ services:
       - "8080:8080"
     environment:
       KC_DB: postgres
-      KC_DB_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB}  # <--- fixed
+      KC_DB_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB}
       KC_DB_USERNAME: ${POSTGRES_USER}
       KC_DB_PASSWORD: ${POSTGRES_PASSWORD}
       KC_BOOTSTRAP_ADMIN_USERNAME: ${KEYCLOAK_ADMIN}
