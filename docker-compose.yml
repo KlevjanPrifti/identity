@@ -45,7 +45,6 @@ services:
       
       # HTTP and proxy config
       KC_HTTP_ENABLED: ${KC_HTTP_ENABLED}
-      KC_PROXY: ${KC_PROXY}
     depends_on:
       postgres:
         condition: service_healthy
