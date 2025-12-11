@@ -163,10 +163,10 @@ const FmList = (props: { value: string; itemAs: string; children: ReactNode }) =
 const { exp, v } = createVariablesHelper("executeActions.ftl");
 // Use centralized helper for logo selection
 import { getLogo } from "../getLogo";
-const { logoSrc, clientName } = getLogo(exp, import.meta.isJsxEmailPreview);
+const { logoSrc } = getLogo(exp, import.meta.isJsxEmailPreview);
 
 export const Template = ({ locale }: TemplateProps) => (
-  <EmailLayout preview="Account update required by administrator" locale={locale} logoUrl={logoSrc} logoAlt={`${clientName} Logo`}>
+  <EmailLayout preview="Account update required by administrator" locale={locale} logoUrl={logoSrc}>
     
 
     <Text style={styles.badge}>ADMIN REQUEST</Text>

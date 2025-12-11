@@ -21,20 +21,6 @@ COPY . .
 RUN pnpm build-keycloak-theme
 
 
-
-############################################
-# Stage 2: Build Email SPI JAR
-############################################
-FROM maven:3.9-eclipse-temurin-21 AS email_spi_builder
-
-WORKDIR /opt/email-spi
-COPY keycloak-email-spi/pom.xml .
-COPY keycloak-email-spi/src ./src
-
-RUN mvn clean package -q -DskipTests
-
-
-
 ############################################
 # Stage 3: Build Keycloak server with SPIs
 ############################################
@@ -45,26 +31,13 @@ WORKDIR /opt/keycloak
 # Copy theme JAR into Keycloak providers
 COPY --from=keycloakify_jar_builder /opt/app/dist_keycloak/*.jar /opt/keycloak/providers/
 
-# Copy Email SPI
-COPY --from=email_spi_builder /opt/email-spi/target/keycloak-email-spi-*.jar /opt/keycloak/providers/
-
 # Default production values
 ENV KC_DB=postgres
 ENV KC_HEALTH_ENABLED=true
 ENV KC_METRICS_ENABLED=true
 
-# CRITICAL FIX: Correct environment variable name
-# Was: KC_SPI_EMAIL_PROVIDER=custom-email-template (WRONG!)
-# Should be: KC_SPI_EMAIL_TEMPLATE_PROVIDER=custom-email-template
-ENV KC_SPI_EMAIL_TEMPLATE_PROVIDER=custom-email-template
-
-# Optional: Enable debug logging for the custom provider
-ENV KC_LOG_LEVEL=INFO,com.example.keycloak.email:DEBUG
-
 # Build the optimized server image
 RUN /opt/keycloak/bin/kc.sh build
-
-
 
 ############################################
 # Stage 4: Runtime Image

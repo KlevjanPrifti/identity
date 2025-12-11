@@ -132,10 +132,10 @@ export const templateName = "Email Update Confirmation";
 const { exp, v } = createVariablesHelper("email-update-confirmation.ftl");
 // Use centralized helper for logo selection
 import { getLogo } from "../getLogo";
-const { logoSrc, clientName } = getLogo(exp, import.meta.isJsxEmailPreview);
+const { logoSrc } = getLogo(exp, import.meta.isJsxEmailPreview);
 
 export const Template = ({ locale }: TemplateProps) => (
-  <EmailLayout preview="Verify your new email address" locale={locale} logoUrl={logoSrc} logoAlt={`${clientName} Logo`}>
+  <EmailLayout preview="Verify your new email address" locale={locale} logoUrl={logoSrc}>
     
     <Text style={styles.badge}>ACTION REQUIRED</Text>
 

@@ -1,4 +1,0 @@
-# File path: src/main/resources/META-INF/services/org.keycloak.email.EmailTemplateProviderFactory
-# This file registers your custom EmailTemplateProviderFactory with Keycloak's SPI
-
-com.example.keycloak.email.CustomEmailTemplateProviderFactory

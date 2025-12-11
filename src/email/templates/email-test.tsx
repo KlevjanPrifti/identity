@@ -3,8 +3,14 @@ import * as Fm from "keycloakify-emails/jsx-email";
 import { EmailLayout } from "../layout";
 import { createVariablesHelper } from "keycloakify-emails/variables";
 import type { GetSubject, GetTemplate, GetTemplateProps } from "keycloakify-emails";
+import { getLogo } from "../getLogo";
 
 interface TemplateProps extends Omit<GetTemplateProps, "plainText"> { }
+
+export const previewProps: TemplateProps = {
+  locale: "en",
+  themeName: "keycloak-custom",
+};
 
 const styles = {
   logoContainer: {
@@ -69,21 +75,13 @@ const styles = {
   },
 };
 
-export const previewProps: TemplateProps = {
-  locale: "en",
-  themeName: "keycloak-custom",
-};
-
 export const templateName = "Email Test";
 
 const { exp, v } = createVariablesHelper("email-test.ftl");
-
-// Use centralized helper for logo selection
-import { getLogo } from "../getLogo";
-const { logoSrc, clientName } = getLogo(exp, import.meta.isJsxEmailPreview);
+const { logoSrc } = getLogo(exp, import.meta.isJsxEmailPreview);
 
 export const Template = ({ locale }: TemplateProps) => (
-  <EmailLayout preview={"SMTP Configuration Test - Action Required"} locale={locale} logoUrl={logoSrc} logoAlt={`${clientName} Logo`}>
+  <EmailLayout preview={"SMTP Configuration Test - Action Required"} locale={locale} logoUrl={logoSrc}>
 
     <Container style={styles.card}>
       <Text style={styles.badge}>✓ SYSTEM TEST</Text>
@@ -95,6 +93,12 @@ export const Template = ({ locale }: TemplateProps) => (
       <Text style={styles.paragraph}>
         Hello there,
       </Text>
+
+      <Fm.If condition={`${v("user")}?? && ${v("user")}.attributes?? && ${v("user")}.attributes['clientLogoURL']??`}>
+        <Text style={styles.paragraph}>
+          Your client: <strong>${`{user.attributes['clientLogoURL']}`}</strong>
+        </Text>
+      </Fm.If>
 
       <Text style={styles.paragraph}>
         This is a test message to verify your SMTP email configuration is working correctly.
