@@ -15,45 +15,42 @@ RUN npm install -g pnpm && pnpm install --frozen-lockfile
 COPY . .
 RUN pnpm build-keycloak-theme
 
+
 ############################################
-# Stage 2: Build Keycloak (NO SECRETS HERE)
+# Stage 2: Build Keycloak (NO secrets)
 ############################################
 FROM quay.io/keycloak/keycloak:${KEYCLOAK_VERSION} AS builder
 
 WORKDIR /opt/keycloak
 
-# Copy theme JAR
+# Copy custom theme provider JAR
 COPY --from=keycloakify_jar_builder /opt/app/dist_keycloak/*.jar /opt/keycloak/providers/
 
-# Build-time feature configuration (NO sensitive data)
+# Build-time config (safe)
 ENV KC_DB=postgres \
-    KC_HTTP_ENABLED=true \
     KC_HEALTH_ENABLED=true \
     KC_METRICS_ENABLED=true \
     KC_PROXY=edge
 
-# Build the optimized server (no secrets needed)
 RUN /opt/keycloak/bin/kc.sh build
 
+
 ############################################
-# Stage 3: Runtime Image (Secrets ONLY here)
+# Stage 3: Runtime image
 ############################################
 FROM quay.io/keycloak/keycloak:${KEYCLOAK_VERSION}
 
 WORKDIR /opt/keycloak
 
-# Copy built Keycloak from Stage 2
 COPY --from=builder /opt/keycloak/ /opt/keycloak/
 
-# Runtime configuration - ALL from environment at container start
-ENV KC_DB=postgres \
-    KC_HTTP_ENABLED=true \
+# Default runtime env — all secrets come from docker-compose
+ENV KC_PROXY=edge \
     KC_HEALTH_ENABLED=true \
-    KC_METRICS_ENABLED=true \
-    KC_PROXY=edge
+    KC_METRICS_ENABLED=true
 
-# Health check
-HEALTHCHECK --interval=30s --timeout=3s --start-period=60s --retries=3 \
+# Healthcheck (HTTP is always enabled in dev mode)
+HEALTHCHECK --interval=30s --timeout=5s --start-period=40s --retries=5 \
   CMD curl -f http://localhost:8080/health/ready || exit 1
 
 ENTRYPOINT ["/opt/keycloak/bin/kc.sh"]

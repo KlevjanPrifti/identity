@@ -1,62 +1,37 @@
 services:
   postgres:
     image: postgres:17-alpine
-    container_name: postgres
     environment:
-      POSTGRES_DB: ${POSTGRES_DB:-keycloak-custom}
-      POSTGRES_USER: ${POSTGRES_USER:-keycloak}
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     volumes:
       - postgres_data:/var/lib/postgresql/data
-    networks:
-      - keycloak-network
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-keycloak} -d ${POSTGRES_DB:-keycloak-custom}"]
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
       interval: 10s
       timeout: 5s
       retries: 5
-
+    restart: always
+    
   keycloak:
     build:
       context: .
-      args:
-        KEYCLOAK_VERSION: ${KEYCLOAK_VERSION}
-    container_name: keycloak
-    environment:
-      # Keycloak basic config
-      KEYCLOAK_VERSION: ${KEYCLOAK_VERSION}
-      KC_HOSTNAME: ${KC_HOSTNAME}
-      KC_HEALTH_ENABLED: ${KC_HEALTH_ENABLED}
-      KC_METRICS_ENABLED: ${KC_METRICS_ENABLED}
-      
-      # Database config
-      KC_DB: postgres
-      KC_DB_URL: ${KC_DB_URL}
-      KC_DB_USERNAME: ${KC_DB_USERNAME}
-      KC_DB_PASSWORD: ${KC_DB_PASSWORD}
-      KC_DB_POOL_INITIAL_SIZE: ${KC_DB_POOL_INITIAL_SIZE}
-      KC_DB_POOL_MIN_SIZE: ${KC_DB_POOL_MIN_SIZE}
-      KC_DB_POOL_MAX_SIZE: ${KC_DB_POOL_MAX_SIZE}
-      QUARKUS_TRANSACTION_MANAGER_ENABLE_RECOVERY: ${QUARKUS_TRANSACTION_MANAGER_ENABLE_RECOVERY}
-      
-      # Admin user credentials
-      KC_BOOTSTRAP_ADMIN_USERNAME: ${KC_BOOTSTRAP_ADMIN_USERNAME}
-      KC_BOOTSTRAP_ADMIN_PASSWORD: ${KC_BOOTSTRAP_ADMIN_PASSWORD}
-      
-      # HTTP and proxy config
-      KC_HTTP_ENABLED: ${KC_HTTP_ENABLED}
     depends_on:
       postgres:
         condition: service_healthy
-    ports:
-      - "${KEYCLOAK_PORT:-8080}:8080"
-    networks:
-      - keycloak-network
-    volumes:
-      - ./realms:/opt/keycloak/data/import
+    environment:
+      KC_DB: postgres
+      KC_DB_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB}
+      KC_DB_USERNAME: ${POSTGRES_USER}
+      KC_DB_PASSWORD: ${POSTGRES_PASSWORD}
+      KC_BOOTSTRAP_ADMIN_USERNAME: ${KEYCLOAK_ADMIN}
+      KC_BOOTSTRAP_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD}
+      KC_HOSTNAME: ${KC_HOSTNAME}      
+      KC_HTTP_ENABLED: "true"               
+      KC_HEALTH_ENABLED: "true"
+      KC_PROXY_HEADERS: "xforwarded"
+    restart: always
 
 volumes:
   postgres_data:
-
-networks:
-  keycloak-network: {}
