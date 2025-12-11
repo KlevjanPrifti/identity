@@ -30,11 +30,16 @@ WORKDIR /opt/keycloak
 # Copy theme JAR into Keycloak providers
 COPY --from=keycloakify_jar_builder /opt/app/dist_keycloak/*.jar /opt/keycloak/providers/
 
-# Default production values
-ENV KC_DB=postgres
-ENV KC_HEALTH_ENABLED=true
-ENV KC_METRICS_ENABLED=true
-ENV KC_PROXY=edge
+# Use build-time defaults (can be overridden at runtime)
+ARG KC_DB=postgres
+ARG KC_HEALTH_ENABLED=true
+ARG KC_METRICS_ENABLED=true
+ARG KC_PROXY=edge
+
+ENV KC_DB=${KC_DB}
+ENV KC_HEALTH_ENABLED=${KC_HEALTH_ENABLED}
+ENV KC_METRICS_ENABLED=${KC_METRICS_ENABLED}
+ENV KC_PROXY=${KC_PROXY}
 
 # Build the optimized server image
 RUN /opt/keycloak/bin/kc.sh build
@@ -48,6 +53,17 @@ WORKDIR /opt/keycloak
 
 # Copy built Keycloak instance from builder
 COPY --from=builder /opt/keycloak/ /opt/keycloak/
+
+# Allow runtime configuration from environment variables
+ENV KC_DB=${KC_DB:-postgres}
+ENV KC_DB_URL=${KC_DB_URL:-jdbc:postgresql://postgres/keycloak}
+ENV KC_DB_USERNAME=${KC_DB_USERNAME:-keycloak}
+ENV KC_DB_PASSWORD=${KC_DB_PASSWORD:-secret}
+ENV KC_HTTP_ENABLED=${KC_HTTP_ENABLED:-true}
+ENV KC_PROXY=${KC_PROXY:-edge}
+ENV KC_HOSTNAME=${KC_HOSTNAME:-auth.local}
+ENV KC_HEALTH_ENABLED=${KC_HEALTH_ENABLED:-true}
+ENV KC_METRICS_ENABLED=${KC_METRICS_ENABLED:-true}
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=3s --start-period=60s --retries=3 \
