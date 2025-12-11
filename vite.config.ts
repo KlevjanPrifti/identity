@@ -4,6 +4,7 @@ import { keycloakify } from "keycloakify/vite-plugin";
 import { buildEmailTheme } from "keycloakify-emails";
 import tailwindcss from '@tailwindcss/vite'
 import path from "path"
+import { env } from "process";
 
 // https://vitejs.dev/config/
 export default defineConfig({
@@ -14,7 +15,10 @@ export default defineConfig({
       accountThemeImplementation: "none",
       themeName: ["keycloak-custom"],
       environmentVariables: [
-        { name: "domain_path_for_logo", default: "https://innovactive.al/img/logo500.png" },
+        {
+          name: "domain_path_for_logo",
+          default: env.VITE_DOMAIN_PATH_FOR_LOGO ?? "https://innovactive.al/img/logo500.png"
+        },
       ],
       postBuild: async (buildContext) => {
         await buildEmailTheme({
