@@ -49,6 +49,10 @@ ENV KC_PROXY=edge \
     KC_HEALTH_ENABLED=true \
     KC_METRICS_ENABLED=true
 
+# Expose HTTP and HTTPS ports
+EXPOSE 8080
+# EXPOSE 8443
+
 # Healthcheck (HTTP is always enabled in dev mode)
 HEALTHCHECK --interval=30s --timeout=5s --start-period=40s --retries=5 \
   CMD curl -f http://localhost:8080/health/ready || exit 1
