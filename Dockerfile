@@ -20,9 +20,8 @@ RUN pnpm install --frozen-lockfile
 COPY . .
 RUN pnpm build-keycloak-theme
 
-
 ############################################
-# Stage 3: Build Keycloak server with SPIs
+# Stage 2: Build Keycloak server with SPIs
 ############################################
 FROM quay.io/keycloak/keycloak:${KEYCLOAK_VERSION} AS builder
 
@@ -40,7 +39,7 @@ ENV KC_METRICS_ENABLED=true
 RUN /opt/keycloak/bin/kc.sh build
 
 ############################################
-# Stage 4: Runtime Image
+# Stage 3: Runtime Image
 ############################################
 FROM quay.io/keycloak/keycloak:${KEYCLOAK_VERSION}
 
@@ -48,17 +47,6 @@ WORKDIR /opt/keycloak
 
 # Copy built Keycloak instance from builder
 COPY --from=builder /opt/keycloak/ /opt/keycloak/
-
-# Runtime DB + server configs
-ENV KC_DB=postgres
-ENV KC_DB_POOL_INITIAL_SIZE=50
-ENV KC_DB_POOL_MIN_SIZE=50
-ENV KC_DB_POOL_MAX_SIZE=50
-ENV QUARKUS_TRANSACTION_MANAGER_ENABLE_RECOVERY=true
-
-# Hostname defaults
-ENV KC_HOSTNAME=localhost
-ENV KC_HTTP_ENABLED=true
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=3s --start-period=60s --retries=3 \
