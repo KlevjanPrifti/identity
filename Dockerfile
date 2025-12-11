@@ -46,15 +46,15 @@ WORKDIR /opt/keycloak
 COPY --from=builder /opt/keycloak/ /opt/keycloak/
 
 # Runtime environment — secrets come from Docker Compose
-ENV KC_DB_URL=jdbc:postgresql://postgres:5432/${POSTGRES_DB} \
-    KC_DB_USERNAME=${POSTGRES_USER} \
-    KC_DB_PASSWORD=${POSTGRES_PASSWORD} \
-    KC_BOOTSTRAP_ADMIN_USERNAME=${KEYCLOAK_ADMIN} \
-    KC_BOOTSTRAP_ADMIN_PASSWORD=${KEYCLOAK_ADMIN_PASSWORD} \
-    KC_HOSTNAME=${KC_HOSTNAME} \
+ENV KC_DB_URL="jdbc:postgresql://postgres:5432/${POSTGRES_DB}" \
+    KC_DB_USERNAME="${POSTGRES_USER}" \
+    KC_DB_PASSWORD="${POSTGRES_PASSWORD}" \
+    KC_BOOTSTRAP_ADMIN_USERNAME="${KEYCLOAK_ADMIN}" \
+    KC_BOOTSTRAP_ADMIN_PASSWORD="${KEYCLOAK_ADMIN_PASSWORD}" \
+    KC_HOSTNAME="${KC_HOSTNAME}" \
     KC_HTTP_ENABLED=true \
     KC_HEALTH_ENABLED=true \
-    KC_METRICS_ENABLED=true \
+    KC_METRICS_ENABLED=true
 
 # Healthcheck
 HEALTHCHECK --interval=30s --timeout=5s --start-period=40s --retries=5 \
