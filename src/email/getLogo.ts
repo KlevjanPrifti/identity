@@ -4,6 +4,5 @@
 
 export function getLogo(exp: any, isPreview: boolean = false) {
   const logoSrc = isPreview ? "/assets/kc-logo.png" : exp("properties.domain_path_for_logo");
-
   return { logoSrc };
 }

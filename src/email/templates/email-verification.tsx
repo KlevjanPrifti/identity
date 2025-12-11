@@ -3,6 +3,7 @@ import * as Fm from "keycloakify-emails/jsx-email";
 import { EmailLayout } from "../layout";
 import type { GetSubject, GetTemplate, GetTemplateProps } from "keycloakify-emails";
 import { createVariablesHelper } from "keycloakify-emails/variables";
+import { getLogo } from "../getLogo";
 
 interface TemplateProps extends Omit<GetTemplateProps, "plainText"> { }
 
@@ -151,21 +152,13 @@ export const previewProps: TemplateProps = {
 export const templateName = "Email Verification";
 
 const { exp, v } = createVariablesHelper("email-verification.ftl");
-// Try to get client logo from the SPI context first, fallback to properties
-// Cast to 'any' to access client object from the new email SPI extension
-const logoSrc = import.meta.isJsxEmailPreview 
-  ? "/assets/kc-logo.png" 
-  : exp("client.logoUri ?? properties.domain_logo" as any);
-const clientName = import.meta.isJsxEmailPreview 
-  ? "Test Client" 
-  : exp("client.name ?? realmName" as any);
+const { logoSrc } = getLogo(exp, import.meta.isJsxEmailPreview);
 
 export const Template = ({ locale }: TemplateProps) => (
   <EmailLayout 
     preview="Welcome! Please verify your email address" 
     locale={locale}
     logoUrl={logoSrc}
-    logoAlt={`${clientName} Logo`}
   >
 
     <Text style={styles.badge}>ACCOUNT CREATED</Text>
@@ -182,13 +175,6 @@ export const Template = ({ locale }: TemplateProps) => (
         Just one more step to get started
       </Text>
     </Container>
-
-          <Fm.If condition={`${v("user")}?? && ${v("user")}.attributes?? && ${v("user")}.attributes['clientLogoURL']??`}>
-            <Text style={styles.paragraph}>
-              Your client: <strong>${`{user.attributes['clientLogoURL']}`}</strong>
-            </Text>
-          </Fm.If>
-    
 
     <Text style={styles.paragraph}>
       A new account has been created with this email address for{" "}

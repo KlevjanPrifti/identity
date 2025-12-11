@@ -4,6 +4,7 @@ import { GetSubject, GetTemplate, GetTemplateProps } from "keycloakify-emails";
 import { ReactNode } from "react";
 import { createVariablesHelper } from "keycloakify-emails/variables";
 import { EmailLayout } from "../layout";
+import { getLogo } from "../getLogo";
 
 interface TemplateProps extends Omit<GetTemplateProps, "plainText"> { }
 
@@ -161,8 +162,6 @@ const FmList = (props: { value: string; itemAs: string; children: ReactNode }) =
 );
 
 const { exp, v } = createVariablesHelper("executeActions.ftl");
-// Use centralized helper for logo selection
-import { getLogo } from "../getLogo";
 const { logoSrc } = getLogo(exp, import.meta.isJsxEmailPreview);
 
 export const Template = ({ locale }: TemplateProps) => (

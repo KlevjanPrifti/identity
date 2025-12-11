@@ -51,12 +51,10 @@ export const EmailLayout = ({
   children,
   preview,
   logoUrl,
-  logoAlt,
 }: PropsWithChildren<{ 
   preview: ReactNode; 
   locale: string;
   logoUrl?: string;
-  logoAlt?: string;
 }>) => (
   <Html lang={locale}>
     <Head>
@@ -70,7 +68,7 @@ export const EmailLayout = ({
         <Container style={contentBox}>
           {logoUrl && (
             <div style={{ textAlign: "center", paddingBottom: "24px" }}>
-              <img src={logoUrl} alt={logoAlt || "Brand Logo"} style={{ maxWidth: "250px", height: "auto" }} />
+              <img src={logoUrl} style={{ maxWidth: "250px", height: "auto" }} />
             </div>
           )}
           {children}

@@ -13,9 +13,8 @@ export default defineConfig({
     keycloakify({
       accountThemeImplementation: "none",
       themeName: ["keycloak-custom"],
-      // See: https://docs.keycloakify.dev/features/environment-variables
       environmentVariables: [
-        { name: "domain_path_for_logo", default: "/img/logo500.png" },
+        { name: "domain_path_for_logo", default: "https://innovactive.al/img/logo500.png" },
       ],
       postBuild: async (buildContext) => {
         await buildEmailTheme({

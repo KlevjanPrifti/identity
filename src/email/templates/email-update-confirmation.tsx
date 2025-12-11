@@ -3,6 +3,7 @@ import * as Fm from "keycloakify-emails/jsx-email";
 import { EmailLayout } from "../layout";
 import type { GetSubject, GetTemplate, GetTemplateProps } from "keycloakify-emails";
 import { createVariablesHelper } from "keycloakify-emails/variables";
+import { getLogo } from "../getLogo";
 
 interface TemplateProps extends Omit<GetTemplateProps, "plainText"> { }
 
@@ -130,8 +131,6 @@ export const previewProps: TemplateProps = {
 export const templateName = "Email Update Confirmation";
 
 const { exp, v } = createVariablesHelper("email-update-confirmation.ftl");
-// Use centralized helper for logo selection
-import { getLogo } from "../getLogo";
 const { logoSrc } = getLogo(exp, import.meta.isJsxEmailPreview);
 
 export const Template = ({ locale }: TemplateProps) => (
