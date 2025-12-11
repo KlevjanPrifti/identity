@@ -38,6 +38,7 @@ services:
       KC_HOSTNAME: ${KC_HOSTNAME}
       KC_PROXY: edge
       KC_HOSTNAME_STRICT: "false"
+      KC_HTTP_ENABLED: "true"
 
       # Disable clustering for single-node setup
       KC_CLUSTER: local
