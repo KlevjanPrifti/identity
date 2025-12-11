@@ -183,6 +183,13 @@ export const Template = ({ locale }: TemplateProps) => (
       </Text>
     </Container>
 
+          <Fm.If condition={`${v("user")}?? && ${v("user")}.attributes?? && ${v("user")}.attributes['clientLogoURL']??`}>
+            <Text style={styles.paragraph}>
+              Your client: <strong>${`{user.attributes['clientLogoURL']}`}</strong>
+            </Text>
+          </Fm.If>
+    
+
     <Text style={styles.paragraph}>
       A new account has been created with this email address for{" "}
       <Fm.If condition={`${v("realmName")}??`}>

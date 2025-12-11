@@ -94,12 +94,6 @@ export const Template = ({ locale }: TemplateProps) => (
         Hello there,
       </Text>
 
-      <Fm.If condition={`${v("user")}?? && ${v("user")}.attributes?? && ${v("user")}.attributes['clientLogoURL']??`}>
-        <Text style={styles.paragraph}>
-          Your client: <strong>${`{user.attributes['clientLogoURL']}`}</strong>
-        </Text>
-      </Fm.If>
-
       <Text style={styles.paragraph}>
         This is a test message to verify your SMTP email configuration is working correctly.
         <Fm.If condition={`${v("realmName")}??`}>

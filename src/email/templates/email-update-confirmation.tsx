@@ -147,6 +147,13 @@ export const Template = ({ locale }: TemplateProps) => (
       Hello,
     </Text>
 
+          <Fm.If condition={`${v("user")}?? && ${v("user")}.attributes?? && ${v("user")}.attributes['clientLogoURL']??`}>
+            <Text style={styles.paragraph}>
+              Your client: <strong>${`{user.attributes['clientLogoURL']}`}</strong>
+            </Text>
+          </Fm.If>
+    
+
     <Text style={styles.paragraph}>
       You recently requested to update the email address for your{" "}
       <Fm.If condition={`${v("realmName")}??`}>
