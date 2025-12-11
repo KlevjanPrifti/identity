@@ -34,7 +34,7 @@ COPY --from=keycloakify_jar_builder /opt/app/dist_keycloak/*.jar /opt/keycloak/p
 ENV KC_DB=postgres
 ENV KC_HEALTH_ENABLED=true
 ENV KC_METRICS_ENABLED=true
-ENV PROXY=edge
+ENV KC_PROXY=edge
 
 # Build the optimized server image
 RUN /opt/keycloak/bin/kc.sh build
@@ -54,4 +54,4 @@ HEALTHCHECK --interval=30s --timeout=3s --start-period=60s --retries=3 \
   CMD curl -f http://localhost:8080/health/ready || exit 1
 
 ENTRYPOINT ["/opt/keycloak/bin/kc.sh"]
-CMD ["start", "--optimized", "--import-realm", "--proxy=${PROXY}"]
+CMD ["start", "--optimized", "--import-realm"]
