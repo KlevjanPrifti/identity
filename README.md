@@ -2,12 +2,6 @@
 
 # Keycloak Custom
 
-![build status](https://github.com/paulgrammer/keycloak-custom/actions/workflows/build.yaml/badge.svg)
-[![Trivy vulnerability scanner](https://github.com/paulgrammer/keycloak-custom/actions/workflows/trivy.yaml/badge.svg?branch=main)](https://github.com/paulgrammer/keycloak-custom/actions/workflows/trivy.yaml)
-<a href="https://ko-fi.com/paulgrammer">
-  <img src="https://ko-fi.com/img/githubbutton_sm.svg" width="150" alt="Support on Ko-fi"/>
-</a>
-
 A modern, production-ready custom theme for Keycloak built with React, TypeScript, and shadcn/ui components. This theme provides a visually stunning authentication experience with glassmorphism effects, smooth animations, and a fully responsive design.
 
 ## Features
@@ -60,8 +54,6 @@ pnpm storybook
 ```
 
 Storybook will be available at `http://localhost:6006`.
-
-**Live Storybook:** [https://cloakwise-io.github.io/keycloak-custom](https://cloakwise-io.github.io/keycloak-custom)
 
 ## Building the Theme
 
@@ -194,11 +186,3 @@ For deploying Keycloak on Kubernetes, follow the official guide:
 - [shadcn/ui Documentation](https://ui.shadcn.com)
 - [Tailwind CSS Documentation](https://tailwindcss.com)
 - [Keycloak Documentation](https://www.keycloak.org/documentation)
-
-## Contributing
-
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Run linting: `pnpm format`
-5. Submit a pull request
