@@ -13,10 +13,6 @@ WORKDIR /opt/app
 COPY package.json pnpm-lock.yaml ./
 RUN npm install -g pnpm && pnpm install --frozen-lockfile
 
-# --- inject just ONE env variable ---
-ARG VITE_DOMAIN_PATH_FOR_LOGO
-ENV VITE_DOMAIN_PATH_FOR_LOGO=$VITE_DOMAIN_PATH_FOR_LOGO
-
 # Copy project source
 COPY . .
 
