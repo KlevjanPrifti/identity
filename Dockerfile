@@ -5,7 +5,6 @@ ARG KEYCLOAK_VERSION=26.4.7
 ############################################
 FROM node:20-alpine AS keycloakify_jar_builder
 
-# Install JDK, Maven, and bash
 RUN apk update && apk add --no-cache openjdk17-jdk maven bash curl
 
 WORKDIR /opt/app
@@ -14,8 +13,14 @@ WORKDIR /opt/app
 COPY package.json pnpm-lock.yaml ./
 RUN npm install -g pnpm && pnpm install --frozen-lockfile
 
-# Copy theme source and build
+# --- inject just ONE env variable ---
+ARG VITE_DOMAIN_PATH_FOR_LOGO
+ENV VITE_DOMAIN_PATH_FOR_LOGO=$VITE_DOMAIN_PATH_FOR_LOGO
+
+# Copy project source
 COPY . .
+
+# Build Keycloak theme
 RUN pnpm build-keycloak-theme
 
 ############################################
