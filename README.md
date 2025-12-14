@@ -13,7 +13,6 @@ A modern, production-ready custom theme for Keycloak built with React, TypeScrip
 
 - **Developer Experience**
   - TypeScript for type safety
-  - Storybook for component development - [View Live Storybook](https://cloakwise-io.github.io/keycloak-custom)
   - Hot module replacement with Vite
   - ESLint and Prettier for code quality
 
