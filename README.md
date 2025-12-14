@@ -181,7 +181,6 @@ For deploying Keycloak on Kubernetes, follow the official guide:
 
 ## Documentation
 
-- [Live Storybook](https://cloakwise-io.github.io/keycloak-custom) - Interactive component documentation
 - [Keycloakify Documentation](https://docs.keycloakify.dev)
 - [shadcn/ui Documentation](https://ui.shadcn.com)
 - [Tailwind CSS Documentation](https://tailwindcss.com)
